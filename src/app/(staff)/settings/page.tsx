@@ -62,12 +62,18 @@ export default async function SettingsPage() {
         )}
       </Card>
 
-      <Card title="Админка">
+      <Card title="Вход в админку">
         <p className="font-mono text-sm">{env.APP_URL}</p>
-        {!appUrlIsPublic && (
+        {appUrlIsPublic ? (
           <p className="mt-2 text-sm text-muted">
-            Адрес не публичный https, поэтому Telegram не даёт боту ставить на него кнопки: ссылка для входа приходит
-            текстом, а кнопки «В админке» под карточками появятся после деплоя.
+            Кнопка «Войти через Telegram» работает, только если этот домен привязан к боту: в @BotFather отправь{" "}
+            <code className="text-fg">/setdomain</code>, выбери {username ? `@${username}` : "бота"} и пришли{" "}
+            <code className="text-fg">{new URL(env.APP_URL).host}</code>. Запасной вход — <code>/admin</code> в боте.
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-muted">
+            Адрес не публичный https. Telegram такие не пускает: кнопка «Войти через Telegram» и кнопки «В админке» под
+            карточками в боте появятся после деплоя. Пока вход — через <code>/admin</code> в боте.
           </p>
         )}
       </Card>
