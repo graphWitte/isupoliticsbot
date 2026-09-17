@@ -24,3 +24,6 @@ Thumbs.db
 next-env.d.ts
 .tsbuildinfo
 *.tsbuildinfo
+
+# локальные настройки Claude Code
+.claude/
