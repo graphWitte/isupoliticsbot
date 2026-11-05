@@ -27,11 +27,11 @@ export function QuestRow({ quest, onOpen, showStatus }: { quest: Quest; onOpen: 
 
         <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" style={{ color: "var(--subtitle)" }}>
           <span className="font-semibold">⭐ {quest.points}</span>
-          {quest.skill && (
-            <span>
-              {SKILL[quest.skill].emoji} {SKILL[quest.skill].label}
+          {quest.skills.map((s) => (
+            <span key={s}>
+              {SKILL[s].emoji} {SKILL[s].label}
             </span>
-          )}
+          ))}
           {showStatus && quest.status !== "OPEN" && (
             <span>
               {STATUS[quest.status].emoji} {STATUS[quest.status].label}

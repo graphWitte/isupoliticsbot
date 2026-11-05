@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import type { Skill } from "@prisma/client";
 import type { MiniAppResult, MiniAppState, Quest } from "@/server/miniapp";
-import { claimQuest, loadState, releaseQuest, submitQuest } from "@/server/miniapp";
-import { SKILL } from "@/lib/labels";
+import { claimQuest, loadState, releaseQuest, setMySkills, submitQuest } from "@/server/miniapp";
+import { SKILL, SKILLS } from "@/lib/labels";
 import { haptic, webApp } from "@/lib/telegram-webapp";
 import { QuestRow, QuestRowSkeleton } from "./quest-row";
 import { QuestSheet } from "./quest-sheet";
@@ -80,6 +81,14 @@ export function MiniApp({ appUrl }: { appUrl: string }) {
     [openId, apply],
   );
 
+  const saveSkills = useCallback(
+    (skills: Skill[]) => {
+      haptic.select();
+      startTransition(async () => apply(await setMySkills(initData.current, skills)));
+    },
+    [apply],
+  );
+
   if (error && !state) return <FatalError message={error} />;
   if (!state) return <Loading />;
 
@@ -90,7 +99,7 @@ export function MiniApp({ appUrl }: { appUrl: string }) {
       <main className="px-4 pb-28 pt-3">
         {tab === "board" && <BoardTab state={state} onOpen={setOpenId} />}
         {tab === "mine" && <MineTab state={state} onOpen={setOpenId} onGoBoard={() => setTab("board")} />}
-        {tab === "me" && <MeTab state={state} appUrl={appUrl} />}
+        {tab === "me" && <MeTab state={state} appUrl={appUrl} busy={pending} onSkills={saveSkills} />}
       </main>
 
       <TabBar tab={tab} onChange={setTab} mine={state.mine.length} open={state.open.length} />
@@ -108,7 +117,9 @@ export function MiniApp({ appUrl }: { appUrl: string }) {
 function BoardTab({ state, onOpen }: { state: MiniAppState; onOpen: (id: string) => void }) {
   const { open, me } = state;
   // Сначала то, что подходит по навыку: человек должен видеть «своё» сверху
-  const mine = me.skills.length ? open.filter((q) => q.skill && me.skills.includes(q.skill)) : [];
+  const mine = me.skills.length
+    ? open.filter((q) => q.skills.some((s) => me.skills.includes(s)))
+    : [];
   const rest = open.filter((q) => !mine.includes(q));
 
   if (!open.length) {
@@ -193,7 +204,17 @@ function MineTab({
   );
 }
 
-function MeTab({ state, appUrl }: { state: MiniAppState; appUrl: string }) {
+function MeTab({
+  state,
+  appUrl,
+  busy,
+  onSkills,
+}: {
+  state: MiniAppState;
+  appUrl: string;
+  busy: boolean;
+  onSkills: (skills: Skill[]) => void;
+}) {
   const { me } = state;
   return (
     <>
@@ -205,21 +226,33 @@ function MeTab({ state, appUrl }: { state: MiniAppState; appUrl: string }) {
         <Stat value={me.doneCount} label="сдано" />
       </div>
 
-      {me.skills.length > 0 && (
-        <>
-          <SectionLabel>Твои навыки</SectionLabel>
-          <div className="flex flex-wrap gap-2">
-            {me.skills.map((s) => (
-              <span key={s} className="rounded-full px-3 py-1.5 text-sm" style={{ background: "var(--section)" }}>
-                {SKILL[s].emoji} {SKILL[s].label}
-              </span>
-            ))}
-          </div>
-          <p className="mt-2 text-xs" style={{ color: "var(--hint)" }}>
-            Квесты под твои навыки показываются на доске первыми.
-          </p>
-        </>
-      )}
+      <SectionLabel>Что я умею</SectionLabel>
+      <div className="flex flex-wrap gap-2">
+        {SKILLS.map((s) => {
+          const on = me.skills.includes(s);
+          return (
+            <button
+              key={s}
+              disabled={busy}
+              onClick={() => onSkills(on ? me.skills.filter((x) => x !== s) : [...me.skills, s])}
+              aria-pressed={on}
+              className="rounded-full px-3 py-2 text-sm transition disabled:opacity-50"
+              style={
+                on
+                  ? { background: "var(--button)", color: "var(--button-text)" }
+                  : { background: "var(--section)", color: "var(--subtitle)" }
+              }
+            >
+              {SKILL[s].emoji} {SKILL[s].label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-xs" style={{ color: "var(--hint)" }}>
+        {me.skills.length
+          ? "Квесты под эти навыки показываются на доске первыми. Отметь всё, что умеешь."
+          : "Отметь, что умеешь — подходящие квесты будут подниматься в начало доски."}
+      </p>
 
       {me.isStaff && (
         <>

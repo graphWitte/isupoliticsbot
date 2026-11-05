@@ -115,11 +115,11 @@ export function QuestSheet({
           <span className="rounded-full px-2 py-1" style={{ background: "var(--section)", color: "var(--subtitle)" }}>
             {KIND[quest.kind].emoji} {KIND[quest.kind].label}
           </span>
-          {quest.skill && (
-            <span className="rounded-full px-2 py-1" style={{ background: "var(--section)", color: "var(--subtitle)" }}>
-              {SKILL[quest.skill].emoji} {SKILL[quest.skill].label}
+          {quest.skills.map((s) => (
+            <span key={s} className="rounded-full px-2 py-1" style={{ background: "var(--section)", color: "var(--subtitle)" }}>
+              {SKILL[s].emoji} {SKILL[s].label}
             </span>
-          )}
+          ))}
           <span className="rounded-full px-2 py-1 font-semibold" style={{ background: "var(--section)" }}>
             ⭐ {quest.points}
           </span>
