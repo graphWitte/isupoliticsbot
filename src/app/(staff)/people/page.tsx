@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { cx } from "@/lib/cx";
 import { isBootstrapAdmin } from "@/lib/env";
-import { ROLE, ROLES } from "@/lib/labels";
+import { ROLE, ROLES, SKILL } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
 import { Avatar, btn, Empty, input, PageHeader } from "@/components/ui";
 import { requireStaff } from "@/server/session";
@@ -33,19 +33,20 @@ export default async function PeoplePage() {
     <>
       <PageHeader
         title="Люди"
-        subtitle="Рейтинг по очкам. Человек появляется здесь, когда пишет боту или жмёт «Беру»."
+        subtitle="Рейтинг по очкам. Навыки человек отмечает сам в приложении, на вкладке «Я»."
       />
 
       {users.length === 0 ? (
         <Empty>Пока никого</Empty>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-muted">
                 <th className="w-12 px-4 py-3 font-medium">#</th>
                 <th className="px-4 py-3 font-medium">Человек</th>
                 <th className="px-4 py-3 font-medium">Роль</th>
+                <th className="px-4 py-3 font-medium">Умеет</th>
                 <th className="px-4 py-3 text-right font-medium">⭐ Очки</th>
                 <th className="px-4 py-3 text-right font-medium">В работе</th>
                 <th className="px-4 py-3 text-right font-medium">Сдано</th>
@@ -96,6 +97,19 @@ export default async function PeoplePage() {
                           {ROLE[user.role]}
                           {bootstrap && <span className="text-faint"> · из .env</span>}
                         </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {user.skills.length ? (
+                        <span className="flex flex-wrap gap-1">
+                          {user.skills.map((s) => (
+                            <span key={s} className="whitespace-nowrap text-xs text-muted" title={SKILL[s].label}>
+                              {SKILL[s].emoji} {SKILL[s].label}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-faint">не указал</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums">{user.points}</td>

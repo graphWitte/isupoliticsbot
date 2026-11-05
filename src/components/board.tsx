@@ -56,7 +56,7 @@ function matches(task: BoardTask, query: string) {
     task.brief ?? "",
     task.assignee?.firstName ?? "",
     task.assignee?.username ?? "",
-    task.skill ? SKILL[task.skill].label : "",
+    task.skills.map((s) => SKILL[s].label).join(" "),
   ]
     .join(" ")
     .toLowerCase();

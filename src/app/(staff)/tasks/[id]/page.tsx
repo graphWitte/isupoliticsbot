@@ -101,11 +101,11 @@ export default async function TaskPage({ params, searchParams }: Props) {
           <Chip>
             {KIND[task.kind].emoji} {KIND[task.kind].label}
           </Chip>
-          {task.skill && (
-            <Chip>
-              {SKILL[task.skill].emoji} {SKILL[task.skill].label}
+          {task.skills.map((s) => (
+            <Chip key={s}>
+              {SKILL[s].emoji} {SKILL[s].label}
             </Chip>
-          )}
+          ))}
           <Chip>⭐ {task.points}</Chip>
         </div>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">{task.title}</h1>
@@ -166,7 +166,7 @@ export default async function TaskPage({ params, searchParams }: Props) {
                     title: task.title,
                     brief: task.brief,
                     kind: task.kind,
-                    skill: task.skill,
+                    skills: task.skills,
                     points: task.points,
                     claimBy: toLocalInput(task.claimBy),
                     dueAt: toLocalInput(task.dueAt),

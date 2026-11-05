@@ -72,11 +72,11 @@ export function TaskCard({
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {(task.status === "REVISION" || task.status === "EXPIRED") && <StatusPill status={task.status} />}
-        {task.skill && (
-          <Chip>
-            {SKILL[task.skill].emoji} {SKILL[task.skill].label}
+        {task.skills.map((s) => (
+          <Chip key={s}>
+            {SKILL[s].emoji} {SKILL[s].label}
           </Chip>
-        )}
+        ))}
         <Chip>⭐ {task.points}</Chip>
       </div>
 

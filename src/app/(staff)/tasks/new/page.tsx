@@ -11,7 +11,7 @@ export default function NewTaskPage() {
         title="Новый квест"
         subtitle="Опубликуй сразу — карточка улетит в чат отдела с кнопкой «Беру». Или сохрани черновиком."
       />
-      <TaskForm mode="create" action={createTaskAction} values={{ kind: "CONTENT", points: 10 }} />
+      <TaskForm mode="create" action={createTaskAction} values={{ kind: "CONTENT", points: 10, skills: [] }} />
     </div>
   );
 }

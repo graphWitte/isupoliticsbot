@@ -11,7 +11,7 @@ export type TaskFormValues = {
   title?: string;
   brief?: string | null;
   kind: TaskKind;
-  skill?: Skill | null;
+  skills?: Skill[];
   points: number;
   claimBy?: string; // уже в формате datetime-local, в поясе отдела
   dueAt?: string;
@@ -76,31 +76,44 @@ export function TaskForm({
         </div>
       </fieldset>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Навык" htmlFor="skill" hint="Кому этот квест подходит лучше всего">
-          <select id="skill" name="skill" defaultValue={values.skill ?? ""} className={input}>
-            <option value="">Любой</option>
-            {SKILLS.map((skill) => (
-              <option key={skill} value={skill}>
-                {SKILL[skill].emoji} {SKILL[skill].label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Очки" htmlFor="points" hint="Сколько ⭐ получит исполнитель после приёмки">
-          <input
-            id="points"
-            name="points"
-            type="number"
-            min={0}
-            max={1000}
-            step={1}
-            required
-            defaultValue={values.points}
-            className={input}
-          />
-        </Field>
-      </div>
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium">Навыки</legend>
+        <div className="flex flex-wrap gap-2">
+          {SKILLS.map((skill) => (
+            <label
+              key={skill}
+              className="cursor-pointer select-none rounded-lg border border-border bg-bg px-3 py-2 text-sm transition hover:border-border-strong has-[:checked]:border-accent has-[:checked]:bg-accent/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/40"
+            >
+              <input
+                type="checkbox"
+                name="skills"
+                value={skill}
+                defaultChecked={values.skills?.includes(skill)}
+                className="sr-only"
+              />
+              {SKILL[skill].emoji} {SKILL[skill].label}
+            </label>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-faint">
+          Можно несколько: на съёмку нужны и фотограф, и видеограф. Квест поднимется в списке у всех,
+          у кого есть хотя бы один из этих навыков. Ничего не отмечено — квест для всех.
+        </p>
+      </fieldset>
+
+      <Field label="Очки" htmlFor="points" hint="Сколько ⭐ получит исполнитель после приёмки">
+        <input
+          id="points"
+          name="points"
+          type="number"
+          min={0}
+          max={1000}
+          step={1}
+          required
+          defaultValue={values.points}
+          className={input}
+        />
+      </Field>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <DeadlineField
