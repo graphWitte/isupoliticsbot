@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition, type FormEvent, type ReactNode } from "react";
+import { useActionState, useTransition, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import type { ActionState } from "@/lib/action-state";
 
 type Action = (prev: ActionState, formData: FormData) => Promise<ActionState>;
@@ -35,8 +35,19 @@ export function ActionForm({
     startTransition(() => dispatch(formData));
   }
 
+  // Ctrl/Cmd+Enter из любого поля: курсор обычно в брифе или в комментарии,
+  // и тянуться мышью к кнопке на каждом квесте — лишние секунды сотню раз в неделю.
+  function onKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey) || pending) return;
+    const form = event.currentTarget;
+    const submitter = form.querySelector<HTMLButtonElement>("button:not([type=button]):not(:disabled)");
+    if (!submitter) return;
+    event.preventDefault();
+    form.requestSubmit(submitter);
+  }
+
   return (
-    <form onSubmit={onSubmit} className={className} aria-busy={pending}>
+    <form onSubmit={onSubmit} onKeyDown={onKeyDown} className={className} aria-busy={pending}>
       <fieldset disabled={pending} className="contents">
         {children}
       </fieldset>

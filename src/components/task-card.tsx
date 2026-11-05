@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Task, User } from "@prisma/client";
 import { cx } from "@/lib/cx";
 import { KIND, SKILL } from "@/lib/labels";
-import { formatDate, formatRelative } from "@/lib/time";
+import { formatRelative } from "@/lib/relative";
+import { formatDateIn } from "@/lib/tz-input";
 import { Avatar, Chip, StatusPill } from "./ui";
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -26,7 +27,7 @@ function relevantDeadline(task: Task): { label: string; date: Date } | null {
   }
 }
 
-export function Deadline({ task, now }: { task: Task; now: Date }) {
+export function Deadline({ task, now, tz }: { task: Task; now: Date; tz: string }) {
   const deadline = relevantDeadline(task);
   if (!deadline) return null;
 
@@ -41,7 +42,7 @@ export function Deadline({ task, now }: { task: Task; now: Date }) {
         : "text-muted";
 
   return (
-    <div className={cx("flex items-center gap-1 text-xs", tone)} title={formatDate(deadline.date)}>
+    <div className={cx("flex items-center gap-1 text-xs", tone)} title={formatDateIn(deadline.date, tz)}>
       <span>{live && left < 0 ? "🔥" : "⏱"}</span>
       <span>
         {deadline.label} {formatRelative(deadline.date, now)}
@@ -50,7 +51,15 @@ export function Deadline({ task, now }: { task: Task; now: Date }) {
   );
 }
 
-export function TaskCard({ task, now }: { task: Task & { assignee: User | null }; now: Date }) {
+export function TaskCard({
+  task,
+  now,
+  tz,
+}: {
+  task: Task & { assignee: User | null };
+  now: Date;
+  tz: string;
+}) {
   return (
     <Link
       href={`/tasks/${task.id}`}
@@ -73,7 +82,7 @@ export function TaskCard({ task, now }: { task: Task & { assignee: User | null }
 
       {(task.assignee || relevantDeadline(task)) && (
         <div className="mt-2.5 flex items-center justify-between gap-2">
-          <Deadline task={task} now={now} />
+          <Deadline task={task} now={now} tz={tz} />
           {task.assignee && (
             <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
               <Avatar name={task.assignee.firstName} className="size-5 text-[10px]" />

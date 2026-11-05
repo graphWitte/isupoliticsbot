@@ -2,6 +2,7 @@ import type { Skill, TaskKind } from "@prisma/client";
 import type { ActionState } from "@/lib/action-state";
 import { KIND, KINDS, SKILL, SKILLS } from "@/lib/labels";
 import { tzName } from "@/lib/time";
+import { DeadlineField } from "./deadline-field";
 import { ActionForm } from "./action-form";
 import { btn, input } from "./ui";
 
@@ -102,14 +103,24 @@ export function TaskForm({
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="⏳ Взять до" htmlFor="claimBy" hint="Никто не взял к сроку — придёт уведомление">
-          <input id="claimBy" name="claimBy" type="datetime-local" defaultValue={values.claimBy} className={input} />
-        </Field>
-        <Field label="📅 Сдать до" htmlFor="dueAt" hint="Можно оставить пустым для контента без срока">
-          <input id="dueAt" name="dueAt" type="datetime-local" defaultValue={values.dueAt} className={input} />
-        </Field>
+        <DeadlineField
+          name="claimBy"
+          kind="claim"
+          tz={tzName}
+          label="⏳ Взять до"
+          hint="Никто не взял к сроку — придёт уведомление"
+          defaultValue={values.claimBy}
+        />
+        <DeadlineField
+          name="dueAt"
+          kind="due"
+          tz={tzName}
+          label="📅 Сдать до"
+          hint="Можно оставить пустым для контента без срока"
+          defaultValue={values.dueAt}
+        />
       </div>
-      <p className="-mt-2 text-xs text-faint">Время указывается по часовому поясу отдела: {tzName}</p>
+      <p className="-mt-2 text-xs text-faint">Время по часовому поясу отдела: {tzName}</p>
 
       <div className="flex flex-wrap gap-2 border-t border-border pt-5">
         {mode === "create" ? (
