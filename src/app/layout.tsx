@@ -9,7 +9,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru">
+    // Скрипт Telegram дописывает в <html> свои CSS-переменные (тема, высота
+    // вьюпорта) ещё до гидратации — без этого React ругается на расхождение.
+    <html lang="ru" suppressHydrationWarning>
       <body className="min-h-screen bg-bg text-fg antialiased">{children}</body>
     </html>
   );

@@ -40,6 +40,9 @@ export async function trySend(chatId: bigint | string, text: string, options: Se
 export const cb = (text: string, data: string): InlineKeyboardButton => ({ text, callback_data: data });
 export const link = (text: string, url: string): InlineKeyboardButton => ({ text, url });
 
+/** Кнопка, открывающая Mini App внутри Telegram. Требует публичный https в APP_URL. */
+export const webApp = (text: string, url: string): InlineKeyboardButton => ({ text, web_app: { url } });
+
 /** Клавиатура из рядов; пустые ряды выкидываются, пустая клавиатура — undefined. */
 export function keyboard(...rows: InlineKeyboardButton[][]): InlineKeyboardMarkup | undefined {
   const filled = rows.filter((row) => row.length > 0);

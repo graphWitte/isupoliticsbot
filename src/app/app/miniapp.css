@@ -1,0 +1,75 @@
+/* Mini App живёт в теме пользователя Telegram: ни одного своего цвета фона или
+   текста — только переменные --tg-theme-*, которые клиент подставляет сам.
+   Запасные значения нужны для обычного браузера, где Telegram их не задаёт. */
+
+.tg {
+  --bg: var(--tg-theme-bg-color, #17212b);
+  --section: var(--tg-theme-section-bg-color, #232e3c);
+  --secondary: var(--tg-theme-secondary-bg-color, #0e1621);
+  --text: var(--tg-theme-text-color, #f5f5f5);
+  --hint: var(--tg-theme-hint-color, #7d8b99);
+  --link: var(--tg-theme-link-color, #6ab3f3);
+  --button: var(--tg-theme-button-color, #5288c1);
+  --button-text: var(--tg-theme-button-text-color, #ffffff);
+  --separator: var(--tg-theme-section-separator-color, rgba(255, 255, 255, 0.08));
+  --destructive: var(--tg-theme-destructive-text-color, #ec3942);
+  --subtitle: var(--tg-theme-subtitle-text-color, var(--hint));
+
+  /* Высота от Telegram, а не 100vh: иначе в развёрнутом виде низ уезжает под экран */
+  min-height: var(--tg-viewport-stable-height, 100dvh);
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  /* В полноэкранном режиме Telegram больше не резервирует место под свои кнопки */
+  padding-top: var(--tg-content-safe-area-inset-top, 0px);
+  padding-left: var(--tg-safe-area-inset-left, 0px);
+  padding-right: var(--tg-safe-area-inset-right, 0px);
+}
+
+.tg * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Нажатие должно отзываться сразу — на телефоне это главный признак «живого» интерфейса */
+.tg button:active:not(:disabled),
+.tg [role="button"]:active {
+  transform: scale(0.985);
+  opacity: 0.75;
+}
+
+.tg button,
+.tg [role="button"] {
+  transition:
+    transform 0.08s ease,
+    opacity 0.08s ease,
+    background-color 0.12s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tg button,
+  .tg [role="button"] {
+    transition: none;
+  }
+  .tg button:active:not(:disabled),
+  .tg [role="button"]:active {
+    transform: none;
+  }
+}
+
+.tg-skeleton {
+  background: linear-gradient(90deg, var(--section) 25%, var(--secondary) 50%, var(--section) 75%);
+  background-size: 200% 100%;
+  animation: tg-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes tg-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tg-skeleton {
+    animation: none;
+  }
+}

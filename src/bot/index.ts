@@ -24,7 +24,7 @@ import {
   reopenTask,
   submitTask,
 } from "@/server/tasks";
-import { cb, keyboard } from "@/server/telegram";
+import { cb, keyboard, webApp as webAppButton } from "@/server/telegram";
 import { isStaff, staffUsers, syncTelegramUser } from "@/server/users";
 
 type BotContext = Context & { user: User };
@@ -60,12 +60,19 @@ async function privateOnly(ctx: BotContext) {
   return false;
 }
 
+/** Кнопка «Открыть приложение». Telegram принимает её только с публичным https. */
+const miniAppButton = (text = "🎯 Открыть квесты") =>
+  appUrlIsPublic ? keyboard([webAppButton(text, `${env.APP_URL}/app`)]) : undefined;
+
 function helpText(user: User) {
   const lines = [
     `Привет, ${esc(user.firstName)}! Это квест-борд медиа-отдела.`,
     "",
-    "Квесты падают в чат отдела — забирай кнопкой «🙋 Беру». Детали и сдача — здесь, в личке.",
+    appUrlIsPublic
+      ? "Квесты падают в чат отдела — забирай кнопкой «🙋 Беру». Всё остальное удобнее в приложении: кнопка ниже."
+      : "Квесты падают в чат отдела — забирай кнопкой «🙋 Беру». Детали и сдача — здесь, в личке.",
     "",
+    "/app — приложение со списком квестов",
     "/board — свободные квесты",
     "/my — мои квесты",
     "/me — мои очки",
@@ -143,7 +150,26 @@ bot.command("start", async (ctx) => {
   await ctx.reply(helpText(ctx.user), { parse_mode: "HTML" });
 });
 
-bot.command("help", (ctx) => ctx.reply(helpText(ctx.user), { parse_mode: "HTML" }));
+bot.command("help", (ctx) =>
+  ctx.reply(helpText(ctx.user), { parse_mode: "HTML", reply_markup: miniAppButton() }),
+);
+
+bot.command("app", async (ctx) => {
+  if (!(await privateOnly(ctx))) return;
+  if (!appUrlIsPublic) {
+    await ctx.reply(
+      [
+        "Приложение откроется, когда админка переедет на публичный адрес.",
+        "",
+        `Сейчас в <code>APP_URL</code> стоит <code>${esc(env.APP_URL)}</code> — Telegram такие адреса не открывает.`,
+        "Пока пользуйся командами: /board, /my, /me.",
+      ].join("\n"),
+      { parse_mode: "HTML" },
+    );
+    return;
+  }
+  await ctx.reply("Все квесты, сдача и твой рейтинг — в одном месте:", { reply_markup: miniAppButton() });
+});
 
 bot.command("id", async (ctx) => {
   const lines = [`Твой Telegram ID: <code>${ctx.from?.id}</code>`, `ID этого чата: <code>${ctx.chat.id}</code>`];
@@ -510,6 +536,7 @@ bot.catch(({ error, ctx }) => {
 // ============ ЗАПУСК ============
 
 const MEMBER_COMMANDS = [
+  { command: "app", description: "Открыть приложение" },
   { command: "board", description: "Свободные квесты" },
   { command: "my", description: "Мои квесты" },
   { command: "me", description: "Мои очки" },
@@ -526,6 +553,16 @@ const STAFF_COMMANDS = [
 async function main() {
   await bot.init();
   await bot.api.setMyCommands(MEMBER_COMMANDS, { scope: { type: "all_private_chats" } });
+
+  // Кнопка слева от поля ввода. Главный вход в приложение: её видно всегда,
+  // в отличие от кнопки под конкретным сообщением, которая уезжает вверх.
+  await bot.api
+    .setChatMenuButton({
+      menu_button: appUrlIsPublic
+        ? { type: "web_app", text: "Квесты", web_app: { url: `${env.APP_URL}/app` } }
+        : { type: "commands" },
+    })
+    .catch((e) => console.warn("[bot] не поставил кнопку меню:", e));
   for (const user of await staffUsers()) {
     await bot.api
       .setMyCommands(STAFF_COMMANDS, { scope: { type: "chat", chat_id: Number(user.telegramId) } })
