@@ -47,7 +47,10 @@ model User {
   authoredTasks Task[]       @relation("author")
   submissions   Submission[] @relation("submitter")
   reviewed      Submission[] @relation("reviewer")
+  actions       TaskEvent[]  @relation("actor")
   pointEntries  PointEntry[]
+  loginCodes    LoginCode[]
+  sessions      Session[]
 
   @@index([role])
   @@index([active])
@@ -103,7 +106,9 @@ model Task {
   eventId String?
   event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
-  skill  Skill? // кому подсвечивать в первую очередь
+  // Несколько навыков: на съёмку часто нужен и фотограф, и видеограф.
+  // Подсветка «подходит тебе» срабатывает по любому совпадению с навыками человека.
+  skills Skill[]
   points Int    @default(10)
 
   // Два РАЗНЫХ дедлайна — в этом вся квест-механика
@@ -113,6 +118,11 @@ model Task {
   assigneeId String?
   assignee   User?     @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   claimedAt  DateTime?
+
+  // Денормализовано ради аналитики: «время до захвата» = claimedAt - publishedAt
+  // — главная метрика продукта, гонять ради неё журнал на каждый график дорого.
+  publishedAt DateTime?
+  doneAt      DateTime?
 
   authorId String
   author   User   @relation("author", fields: [authorId], references: [id])
@@ -152,7 +162,7 @@ model TaskTemplate {
   title  String
   brief  String?
   kind   TaskKind @default(EVENT)
-  skill  Skill?
+  skills Skill[]
   points Int      @default(10)
 
   // Смещения в минутах от Event.startsAt.
@@ -186,6 +196,11 @@ model Submission {
   links   String[] // ссылки на результат: облако, пост, макет
   comment String?
 
+  // Сдали медиа прямо в бота (мем, макет) — помним исходное сообщение,
+  // чтобы переслать проверяющим через copyMessage, а не качать файл.
+  tgChatId    BigInt?
+  tgMessageId Int?
+
   status     ReviewStatus @default(PENDING)
   reviewerId String?
   reviewer   User?        @relation("reviewer", fields: [reviewerId], references: [id])
@@ -206,8 +221,9 @@ model TaskEvent {
   id        String   @id @default(cuid())
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  actorId   String?
-  type      String // created | published | claimed | released | submitted | accepted | rejected | expired
+  actorId   String? // null — сделала сама система (например, протухание)
+  actor     User?    @relation("actor", fields: [actorId], references: [id], onDelete: SetNull)
+  type      String // created | edited | published | claimed | released | unassigned | submitted | accepted | rejected | cancelled | expired | reopened
   meta      Json?
   createdAt DateTime @default(now())
 
@@ -225,4 +241,49 @@ model PointEntry {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// ============ ДОСТУП К АДМИНКЕ ============
+
+// Вход без паролей: бот присылает одноразовую ссылку /auth/<code>.
+// В базе только хэши — утёкшая база не даёт ни войти, ни угнать сессию.
+model LoginCode {
+  id        String    @id @default(cuid())
+  codeHash  String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ============ БОТ ============
+
+// Чего бот ждёт от человека следующим сообщением: ссылку на сдачу,
+// комментарий к возврату. В памяти держать нельзя — tsx watch и деплой
+// перезапускают процесс, и человек застрянет посреди сдачи.
+model ChatState {
+  telegramId BigInt   @id
+  action     String // submit | reject_note
+  payload    String // id квеста или сдачи
+  expiresAt  DateTime
+}
+
+// Настройки, которые меняются из бота или админки без перезапуска.
+// department_chat -> { chatId, threadId, title }
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
 }

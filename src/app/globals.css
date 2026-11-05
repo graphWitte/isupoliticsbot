@@ -2,14 +2,28 @@
 
 @theme {
   --color-bg: #0b0d10;
-  --color-surface: #14181d;
+  --color-surface: #12161b;
+  --color-surface-2: #181d23;
+  --color-surface-3: #1f252c;
   --color-border: #232a32;
+  --color-border-strong: #313a45;
+  --color-fg: #e6ebf2;
   --color-muted: #8b96a5;
+  --color-faint: #5d6773;
   --color-accent: #4f8cff;
+  --color-accent-hover: #6a9dff;
 }
 
-html,
+html {
+  /* нативные календари и скроллбары — тоже тёмные */
+  color-scheme: dark;
+}
+
 body {
   background: var(--color-bg);
-  color: #e6ebf2;
+  color: var(--color-fg);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
