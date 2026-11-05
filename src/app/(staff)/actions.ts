@@ -57,18 +57,17 @@ function readTaskForm(fd: FormData): TaskInput {
   const kind = z.enum(KINDS).safeParse(field(fd, "kind"));
   if (!kind.success) throw new UserError("Выбери тип квеста");
 
-  let skill: Skill | null = null;
-  if (field(fd, "skill")) {
-    const parsed = z.enum(SKILLS).safeParse(field(fd, "skill"));
-    if (!parsed.success) throw new UserError("Неизвестный навык");
-    skill = parsed.data;
-  }
+  // getAll: чекбоксов может быть несколько. Дубли режем — форму можно подделать.
+  const rawSkills = [...new Set(fd.getAll("skills").filter((v): v is string => typeof v === "string"))];
+  const parsedSkills = z.array(z.enum(SKILLS)).safeParse(rawSkills);
+  if (!parsedSkills.success) throw new UserError("Неизвестный навык");
+  const skills: Skill[] = parsedSkills.data;
 
   return {
     title: field(fd, "title"),
     brief: field(fd, "brief"),
     kind: kind.data,
-    skill,
+    skills,
     points: Number(field(fd, "points")),
     claimBy: readDate(fd, "claimBy", "Взять до"),
     dueAt: readDate(fd, "dueAt", "Сдать до"),

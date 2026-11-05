@@ -44,7 +44,7 @@ function statusLine(task: CardTask): string {
 export function renderCard(task: CardTask, opts: { forAssignee?: boolean } = {}): string {
   const kind = KIND[task.kind];
   const meta = [kind.label];
-  if (task.skill) meta.push(`${SKILL[task.skill].emoji} ${SKILL[task.skill].label}`);
+  for (const s of task.skills) meta.push(`${SKILL[s].emoji} ${SKILL[s].label}`);
   meta.push(`⭐ ${task.points}`);
 
   const out = [`${kind.emoji} <b>${esc(task.title)}</b>`, meta.join(" · ")];

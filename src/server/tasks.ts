@@ -30,7 +30,7 @@ export type TaskInput = {
   title: string;
   brief: string | null;
   kind: TaskKind;
-  skill: Skill | null;
+  skills: Skill[];
   points: number;
   claimBy: Date | null;
   dueAt: Date | null;

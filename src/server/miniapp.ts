@@ -1,6 +1,8 @@
 "use server";
 
-import type { Skill, TaskKind, TaskStatus } from "@prisma/client";
+import { type Skill, type TaskKind, type TaskStatus } from "@prisma/client";
+import { z } from "zod";
+import { SKILLS } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/time";
 import { describeError, isUserError, UserError } from "./errors";
@@ -15,7 +17,7 @@ export type Quest = {
   title: string;
   brief: string | null;
   kind: TaskKind;
-  skill: Skill | null;
+  skills: Skill[];
   status: TaskStatus;
   points: number;
   claimBy: string | null;
@@ -49,7 +51,7 @@ const questSelect = {
   title: true,
   brief: true,
   kind: true,
-  skill: true,
+  skills: true,
   status: true,
   points: true,
   claimBy: true,
@@ -63,7 +65,7 @@ type QuestRow = {
   title: string;
   brief: string | null;
   kind: TaskKind;
-  skill: Skill | null;
+  skills: Skill[];
   status: TaskStatus;
   points: number;
   claimBy: Date | null;
@@ -81,7 +83,7 @@ function toQuest(row: QuestRow): Quest {
     title: row.title,
     brief: row.brief,
     kind: row.kind,
-    skill: row.skill,
+    skills: row.skills,
     status: row.status,
     points: row.points,
     claimBy: row.claimBy?.toISOString() ?? null,
@@ -189,5 +191,14 @@ export async function submitQuest(
     const links = [...new Set(text.match(/https?:\/\/\S+/g) ?? [])];
     await submitTask(user, taskId, { text, links });
     return "Сдано! Куратор проверит и напишет";
+  });
+}
+
+/** Человек сам отмечает, что умеет: подбор «подходят тебе» строится на этом. */
+export async function setMySkills(initData: string, skills: string[]): Promise<MiniAppResult> {
+  return run(initData, async (userId) => {
+    const parsed = z.array(z.enum(SKILLS)).safeParse([...new Set(skills)]);
+    if (!parsed.success) throw new UserError("Неизвестный навык");
+    await prisma.user.update({ where: { id: userId }, data: { skills: parsed.data as Skill[] } });
   });
 }

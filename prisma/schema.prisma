@@ -106,7 +106,9 @@ model Task {
   eventId String?
   event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
-  skill  Skill? // кому подсвечивать в первую очередь
+  // Несколько навыков: на съёмку часто нужен и фотограф, и видеограф.
+  // Подсветка «подходит тебе» срабатывает по любому совпадению с навыками человека.
+  skills Skill[]
   points Int    @default(10)
 
   // Два РАЗНЫХ дедлайна — в этом вся квест-механика
@@ -160,7 +162,7 @@ model TaskTemplate {
   title  String
   brief  String?
   kind   TaskKind @default(EVENT)
-  skill  Skill?
+  skills Skill[]
   points Int      @default(10)
 
   // Смещения в минутах от Event.startsAt.

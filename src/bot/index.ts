@@ -253,7 +253,7 @@ bot.command("new", async (ctx) => {
       title,
       brief: rest.join("\n"),
       kind: "CONTENT",
-      skill: null,
+      skills: [],
       points: 10,
       claimBy: null,
       dueAt: null,
